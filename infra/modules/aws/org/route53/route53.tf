@@ -1,5 +1,15 @@
 resource "aws_route53domains_registered_domain" "fomiller" {
   domain_name = "fomiller.com"
+
+  # DNS now hosted in Cloudflare (Route 53 stays the registrar) — see
+  # infra/modules/cloudflare in the homelab repo for the zone/tunnel setup.
+  name_server {
+    name = "isla.ns.cloudflare.com"
+  }
+
+  name_server {
+    name = "jack.ns.cloudflare.com"
+  }
 }
 
 resource "aws_route53_record" "fomiller" {
