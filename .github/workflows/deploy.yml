@@ -94,23 +94,25 @@ jobs:
   Member-dev:
     name: ${{ github.event_name == 'pull_request' && 'Plan Member (dev)' || 'Apply Member (dev)' }}
     needs: Org
-    uses: fomiller/gh-actions/.github/workflows/terragrunt.yaml@main
+    uses: fomiller/gh-actions/.github/workflows/terragrunt.yaml@role-skip-session-tagging
     with:
       environment: dev
       infra-dir: infra/modules/aws/member
       doppler-project: aws-org
       tg-version: 0.42.8
       tg-plan: ${{ github.event_name == 'pull_request' }}
+      role-skip-session-tagging: true
     secrets: inherit
 
   Member-prod:
     name: ${{ github.event_name == 'pull_request' && 'Plan Member (prod)' || 'Apply Member (prod)' }}
     needs: Member-dev
-    uses: fomiller/gh-actions/.github/workflows/terragrunt.yaml@main
+    uses: fomiller/gh-actions/.github/workflows/terragrunt.yaml@role-skip-session-tagging
     with:
       environment: prod
       infra-dir: infra/modules/aws/member
       doppler-project: aws-org
       tg-version: 0.42.8
       tg-plan: ${{ github.event_name == 'pull_request' }}
+      role-skip-session-tagging: true
     secrets: inherit
