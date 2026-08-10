@@ -11,17 +11,17 @@ locals {
   roles = {
     admin = {
       permission_set_arn = aws_ssoadmin_permission_set.admin.arn
-      group_id           = data.aws_identitystore_group.admins.group_id
+      group_id           = one(data.aws_identitystore_group.admins[*].group_id)
     }
     readonly = {
       permission_set_arn = aws_ssoadmin_permission_set.readonly.arn
-      group_id           = data.aws_identitystore_group.readonly.group_id
+      group_id           = one(data.aws_identitystore_group.readonly[*].group_id)
     }
   }
 
-  assignments = merge([
+  assignments = var.sso_groups_provisioned ? merge([
     for account, account_id in local.accounts : {
       for role, cfg in local.roles : "${account}-${role}" => merge(cfg, { account_id = account_id })
     }
-  ]...)
+  ]...) : {}
 }
