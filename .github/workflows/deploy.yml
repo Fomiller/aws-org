@@ -94,7 +94,7 @@ jobs:
   Member-dev:
     name: ${{ github.event_name == 'pull_request' && 'Plan Member (dev)' || 'Apply Member (dev)' }}
     needs: Org
-    uses: fomiller/gh-actions/.github/workflows/terragrunt.yaml@role-skip-session-tagging
+    uses: fomiller/gh-actions/.github/workflows/terragrunt.yaml@main
     with:
       environment: dev
       infra-dir: infra/modules/aws/member
@@ -107,7 +107,7 @@ jobs:
   Member-prod:
     name: ${{ github.event_name == 'pull_request' && 'Plan Member (prod)' || 'Apply Member (prod)' }}
     needs: Member-dev
-    uses: fomiller/gh-actions/.github/workflows/terragrunt.yaml@role-skip-session-tagging
+    uses: fomiller/gh-actions/.github/workflows/terragrunt.yaml@main
     with:
       environment: prod
       infra-dir: infra/modules/aws/member
