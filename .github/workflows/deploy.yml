@@ -41,6 +41,10 @@ jobs:
         with:
           cancel_others: 'true'
           concurrent_skipping: 'same_content_newer'
+          # A squash merge has the same tree as the PR that just planned it, so
+          # dedup treats the apply as a duplicate and skips it. Content can't
+          # tell a plan from an apply.
+          do_not_skip: '["push", "workflow_dispatch", "schedule", "merge_group"]'
 
   Org:
     name: ${{ github.event_name == 'pull_request' && 'Plan Org' || 'Apply Org' }}
