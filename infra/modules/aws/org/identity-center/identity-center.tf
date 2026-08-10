@@ -1,6 +1,6 @@
 resource "aws_ssoadmin_permission_set" "admin" {
   name             = "AdministratorAccess"
-  description      = "Full access. Held by the aws-admins group from authentik."
+  description      = "Full access. Held by the aws-admins group."
   instance_arn     = local.instance_arn
   session_duration = "PT8H"
 }
@@ -13,7 +13,7 @@ resource "aws_ssoadmin_managed_policy_attachment" "admin" {
 
 resource "aws_ssoadmin_permission_set" "readonly" {
   name             = "ReadOnlyAccess"
-  description      = "Read-only. Held by the aws-readonly group from authentik."
+  description      = "Read-only. Held by the aws-readonly group."
   instance_arn     = local.instance_arn
   session_duration = "PT8H"
 }

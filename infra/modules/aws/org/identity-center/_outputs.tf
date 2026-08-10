@@ -8,3 +8,10 @@ output "permission_set_arns" {
     readonly = aws_ssoadmin_permission_set.readonly.arn
   }
 }
+
+output "group_ids" {
+  value = {
+    admins   = aws_identitystore_group.admins.group_id
+    readonly = aws_identitystore_group.readonly.group_id
+  }
+}
