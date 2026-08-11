@@ -18,80 +18,81 @@ login env:
 import tfResource awsResource dir:
     doppler run \
     --name-transformer tf-var  \
-    -- terragrunt import \
-    {{tfResource}} \
-    {{awsResource}} \
-    --terragrunt-working-dir {{infraDir}}/{{dir}}
+    -- terragrunt import --tf-path terraform \
+    --working-dir {{infraDir}}/{{dir}} \
+    {{tfResource}} {{awsResource}}
 
 init dir:
     doppler run \
     --name-transformer tf-var  \
-    -- terragrunt init \
-    --terragrunt-working-dir {{infraDir}}/{{dir}}
-    
+    -- terragrunt init --tf-path terraform \
+    --working-dir {{infraDir}}/{{dir}}
+
 init-all:
     doppler run \
     --name-transformer tf-var  \
-    -- terragrunt run-all init \
-    --terragrunt-working-dir {{infraDir}}
+    -- terragrunt run --all --tf-path terraform \
+    --working-dir {{infraDir}} \
+    -- init
 
 init-migrate dir:
     doppler run \
     --name-transformer tf-var  \
-    -- terragrunt init -migrate-state \
-    --terragrunt-working-dir {{infraDir}}/{{dir}}
+    -- terragrunt init --tf-path terraform -migrate-state \
+    --working-dir {{infraDir}}/{{dir}}
 
 validate dir:
     doppler run \
     --name-transformer tf-var  \
-    -- terragrunt validate \
-    --terragrunt-working-dir {{infraDir}}/{{dir}}
+    -- terragrunt validate --tf-path terraform \
+    --working-dir {{infraDir}}/{{dir}}
 
 validate-all:
     doppler run \
     --name-transformer tf-var  \
-    -- terragrunt validate \
-    --terragrunt-working-dir {{infraDir}}
-    
+    -- terragrunt validate --tf-path terraform \
+    --working-dir {{infraDir}}
+
 plan dir:
     doppler run \
     --name-transformer tf-var  \
-    -- terragrunt plan \
-    --terragrunt-working-dir {{infraDir}}/{{dir}}
+    -- terragrunt plan --tf-path terraform \
+    --working-dir {{infraDir}}/{{dir}}
 
 plan-all:
     doppler run \
     --name-transformer tf-var  \
-    -- terragrunt run-all \
-    plan --terragrunt-working-dir {{infraDir}}
-    
+    -- terragrunt run --all --tf-path terraform \
+    --working-dir {{infraDir}} \
+    -- plan
+
 apply dir:
     doppler run \
     --name-transformer tf-var  \
-    -- terragrunt apply \
+    -- terragrunt apply --tf-path terraform \
     -auto-approve \
-    --terragrunt-working-dir {{infraDir}}/{{dir}} \
-    
+    --working-dir {{infraDir}}/{{dir}}
+
 apply-all dir=infraDir:
     doppler run \
     --name-transformer tf-var  \
-    -- terragrunt run-all apply \
-    --terragrunt-working-dir={{dir}} \
-    --terragrunt-non-interactive
+    -- terragrunt --non-interactive run --all --tf-path terraform \
+    --working-dir {{dir}} \
+    -- apply
 
 destroy dir:
     doppler run \
     --name-transformer tf-var  \
-    -- terragrunt destroy \
-    --terragrunt-working-dir {{infraDir}}/{{dir}} \
-    --terragrunt-non-interactive
-    
+    -- terragrunt --non-interactive destroy --tf-path terraform \
+    --working-dir {{infraDir}}/{{dir}}
+
 destroy-all:
     doppler run \
     --name-transformer tf-var  \
-    -- terragrunt run-all \
-    destroy --terragrunt-working-dir {{infraDir}}
-    
+    -- terragrunt --non-interactive run --all --tf-path terraform \
+    --working-dir {{infraDir}} \
+    -- destroy
+
 
 fmt:
     doppler run \
