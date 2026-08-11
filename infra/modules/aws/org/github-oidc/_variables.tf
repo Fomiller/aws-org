@@ -5,10 +5,3 @@ variable "assuming_account_ids" {
   type    = list(string)
   default = []
 }
-
-# Identity Center permission set names allowed to make the same jump from those
-# accounts, so the stacks can be run by hand.
-variable "sso_permission_sets" {
-  type    = list(string)
-  default = []
-}

@@ -6,8 +6,3 @@ assuming_account_ids = [
   "695434033664",
   "737133467188",
 ]
-
-sso_permission_sets = [
-  "AdministratorAccess",
-  "CloudAdmin",
-]

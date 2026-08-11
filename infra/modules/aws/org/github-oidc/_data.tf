@@ -61,33 +61,4 @@ data "aws_iam_policy_document" "github_actions" {
       }
     }
   }
-
-  # Same chain, but for a person. Running the same stack locally means a member
-  # account profile for the default provider, so the Identity Center role has to
-  # reach this one too. Identity Center names roles with a random suffix, so the
-  # match is on the path it puts them under rather than a fixed ARN.
-  dynamic "statement" {
-    for_each = length(var.assuming_account_ids) > 0 ? [1] : []
-
-    content {
-      effect  = "Allow"
-      actions = ["sts:AssumeRole"]
-
-      principals {
-        type        = "AWS"
-        identifiers = [for id in var.assuming_account_ids : "arn:aws:iam::${id}:root"]
-      }
-
-      condition {
-        test     = "ArnLike"
-        variable = "aws:PrincipalArn"
-        values = flatten([
-          for id in var.assuming_account_ids : [
-            for ps in var.sso_permission_sets :
-            "arn:aws:sts::${id}:assumed-role/AWSReservedSSO_${ps}_*/*"
-          ]
-        ])
-      }
-    }
-  }
 }
