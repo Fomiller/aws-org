@@ -4,10 +4,11 @@
 # - Push to main applies, in order: org account, then the dev and prod member
 #   accounts.
 #
-# The org job is inline rather than a call to fomiller/gh-actions because it
-# runs as the org account's admin user with no role to assume, and the shared
-# workflow always sets role-to-assume. Its creds come from the `org`
-# environment.
+# The org job is inline rather than a call to fomiller/gh-actions because the
+# shared workflow is built around the member accounts. Its role ARN comes from
+# the `org` environment.
+#
+# All four jobs authenticate with GitHub OIDC. No static keys.
 
 name: 'Terragrunt Deploy'
 
@@ -52,6 +53,9 @@ jobs:
     if: ${{ needs.pre-check.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
     environment: org
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout
@@ -82,8 +86,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.ADMIN_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.ADMIN_AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
           role-duration-seconds: 1200
 
@@ -98,6 +101,9 @@ jobs:
   Member-dev:
     name: ${{ github.event_name == 'pull_request' && 'Plan Member (dev)' || 'Apply Member (dev)' }}
     needs: Org
+    permissions:
+      id-token: write
+      contents: read
     uses: fomiller/gh-actions/.github/workflows/terragrunt.yaml@main
     with:
       environment: dev
@@ -105,12 +111,15 @@ jobs:
       doppler-project: aws-org
       tg-version: 0.42.8
       tg-plan: ${{ github.event_name == 'pull_request' }}
-      role-skip-session-tagging: true
+      use-oidc: true
     secrets: inherit
 
   Member-prod:
     name: ${{ github.event_name == 'pull_request' && 'Plan Member (prod)' || 'Apply Member (prod)' }}
     needs: Member-dev
+    permissions:
+      id-token: write
+      contents: read
     uses: fomiller/gh-actions/.github/workflows/terragrunt.yaml@main
     with:
       environment: prod
@@ -118,5 +127,5 @@ jobs:
       doppler-project: aws-org
       tg-version: 0.42.8
       tg-plan: ${{ github.event_name == 'pull_request' }}
-      role-skip-session-tagging: true
+      use-oidc: true
     secrets: inherit
