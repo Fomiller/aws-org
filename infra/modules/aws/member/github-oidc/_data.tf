@@ -5,12 +5,7 @@ data "aws_iam_policy" "admin_access" {
   arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
-# Every deploy job sets a GitHub environment, so the sub claim is
-# repo:owner/name:environment:env and not a branch ref. Pinning on it keeps a
-# workflow on some other branch from assuming the role.
 data "aws_iam_policy_document" "github_actions" {
-  for_each = var.github_deploy_repos
-
   statement {
     effect  = "Allow"
     actions = ["sts:AssumeRoleWithWebIdentity"]
@@ -26,18 +21,20 @@ data "aws_iam_policy_document" "github_actions" {
       values   = ["sts.amazonaws.com"]
     }
 
+    # Any repo under the owner, but only from a job running in this account's
+    # GitHub environment. That pin is what stops a dev deploy from assuming the
+    # prod role.
+    #
     # Repos created, renamed or transferred after 2026-07-15 get the immutable
     # sub format, which folds the owner and repo IDs into the repo segment.
     # Accept both so a rename or an opt-in doesn't lock CI out.
     condition {
-      test     = "StringEquals"
+      test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values = flatten([
-        for env in each.value.environments : [
-          "repo:${local.github_owner}/${each.key}:environment:${env}",
-          "repo:${local.github_owner}@${local.github_owner_id}/${each.key}@${each.value.repo_id}:environment:${env}",
-        ]
-      ])
+      values = [
+        "repo:${local.github_owner}/*:environment:${var.environment}",
+        "repo:${local.github_owner}@${local.github_owner_id}/*:environment:${var.environment}",
+      ]
     }
   }
 }
