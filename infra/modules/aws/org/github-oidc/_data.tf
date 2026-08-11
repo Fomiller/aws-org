@@ -43,8 +43,8 @@ data "aws_iam_policy_document" "github_actions" {
   # from a job running in dev. Those jobs chain into this role instead of
   # carrying a static key for it.
   #
-  # The account principal covers a human on SSO doing the same thing locally.
-  # It grants nothing on its own: the caller still needs sts:AssumeRole.
+  # The account principal covers anyone already in this account. It grants
+  # nothing on its own: the caller still needs sts:AssumeRole.
   dynamic "statement" {
     for_each = length(var.assuming_account_ids) > 0 ? [1] : []
 
@@ -58,6 +58,35 @@ data "aws_iam_policy_document" "github_actions" {
           [for id in var.assuming_account_ids : "arn:aws:iam::${id}:role/github-actions"],
           ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"],
         )
+      }
+    }
+  }
+
+  # Same chain, but for a person. Running the same stack locally means a member
+  # account profile for the default provider, so the Identity Center role has to
+  # reach this one too. Identity Center names roles with a random suffix, so the
+  # match is on the path it puts them under rather than a fixed ARN.
+  dynamic "statement" {
+    for_each = length(var.assuming_account_ids) > 0 ? [1] : []
+
+    content {
+      effect  = "Allow"
+      actions = ["sts:AssumeRole"]
+
+      principals {
+        type        = "AWS"
+        identifiers = [for id in var.assuming_account_ids : "arn:aws:iam::${id}:root"]
+      }
+
+      condition {
+        test     = "ArnLike"
+        variable = "aws:PrincipalArn"
+        values = flatten([
+          for id in var.assuming_account_ids : [
+            for ps in var.sso_permission_sets :
+            "arn:aws:sts::${id}:assumed-role/AWSReservedSSO_${ps}_*/*"
+          ]
+        ])
       }
     }
   }
