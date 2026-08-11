@@ -37,4 +37,28 @@ data "aws_iam_policy_document" "github_actions" {
       ]
     }
   }
+
+  # Some member-account stacks manage resources that live here — the
+  # aws-infra-shared-services route53 unit owns hosted zones in this account
+  # from a job running in dev. Those jobs chain into this role instead of
+  # carrying a static key for it.
+  #
+  # The account principal covers a human on SSO doing the same thing locally.
+  # It grants nothing on its own: the caller still needs sts:AssumeRole.
+  dynamic "statement" {
+    for_each = length(var.assuming_account_ids) > 0 ? [1] : []
+
+    content {
+      effect  = "Allow"
+      actions = ["sts:AssumeRole"]
+
+      principals {
+        type = "AWS"
+        identifiers = concat(
+          [for id in var.assuming_account_ids : "arn:aws:iam::${id}:role/github-actions"],
+          ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"],
+        )
+      }
+    }
+  }
 }
