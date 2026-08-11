@@ -11,10 +11,6 @@ clean:
 doppler-switch env:
     doppler setup -p aws-org -c {{env}}
 
-login env:
-    doppler run \
-    -- assume-role login -p {{env}}Terraform
-
 import tfResource awsResource dir:
     doppler run \
     --name-transformer tf-var  \
