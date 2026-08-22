@@ -24,17 +24,64 @@ data "aws_iam_policy_document" "github_actions" {
     # Any repo under the owner, but only from a job running in this account's
     # GitHub environment. That pin is what stops a dev deploy from assuming the
     # prod role.
-    #
-    # Repos created, renamed or transferred after 2026-07-15 get the immutable
-    # sub format, which folds the owner and repo IDs into the repo segment.
-    # Accept both so a rename or an opt-in doesn't lock CI out.
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values = [
-        "repo:${local.github_owner}/*:environment:${var.environment}",
-        "repo:${local.github_owner}@${local.github_owner_id}/*:environment:${var.environment}",
-      ]
+      values   = [for o in local.github_owner_segments : "repo:${o}/*:environment:${var.environment}"]
     }
+  }
+}
+
+data "aws_iam_policy_document" "github_actions_ecr" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    # No environment pin here: docker-ecr.yaml and helm-ecr.yaml set no GitHub
+    # environment on their jobs, so a sub written like the role above would
+    # never match. The branch is what narrows this instead, and it is the only
+    # branch those workflows push from.
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = [for o in local.github_owner_segments : "repo:${o}/*:ref:refs/heads/main"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "ecr_publish" {
+  statement {
+    effect    = "Allow"
+    actions   = ["ecr:GetAuthorizationToken"]
+    resources = ["*"]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:BatchGetImage",
+      "ecr:CompleteLayerUpload",
+      "ecr:DescribeRepositories",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:InitiateLayerUpload",
+      "ecr:ListImages",
+      "ecr:PutImage",
+      "ecr:UploadLayerPart",
+    ]
+    resources = [
+      "arn:aws:ecr:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:repository/*"
+    ]
   }
 }
