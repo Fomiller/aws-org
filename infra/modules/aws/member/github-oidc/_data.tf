@@ -50,12 +50,18 @@ data "aws_iam_policy_document" "github_actions_ecr" {
 
     # No environment pin here: docker-ecr.yaml and helm-ecr.yaml set no GitHub
     # environment on their jobs, so a sub written like the role above would
-    # never match. The branch is what narrows this instead, and it is the only
-    # branch those workflows push from.
+    # never match.
+    #
+    # Any branch, not just main. Those workflows take a workflow_dispatch that
+    # publishes a release candidate off a feature branch, so pinning main means
+    # a candidate can never be pushed. The pin bought little: only a push to
+    # main and a manual run reach this role at all, a pull request never
+    # authenticates, and dispatching one needs write access to the repo. So the
+    # set of people who can publish is the same either way.
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = [for o in local.github_owner_segments : "repo:${o}/*:ref:refs/heads/main"]
+      values   = [for o in local.github_owner_segments : "repo:${o}/*:ref:refs/heads/*"]
     }
   }
 }
